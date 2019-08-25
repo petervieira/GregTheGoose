@@ -61,4 +61,4 @@ class MyClient(discord.Client):
 client = MyClient() # creates client as subclass of discord.Client and overrides the events (avoids decorators)
 
 # client runs the bot token
-client.run('NjAwMDI2Njc5MjA0NjQyODI2.XStxsQ.eyHirG8mRpxjgZKEBSy7KlSRLMI')
+client.run(TOKEN)
