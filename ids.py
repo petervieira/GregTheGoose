@@ -12,4 +12,5 @@ music_id: int = 492175154730762240
 
 # edit this list to choose the channels in which the bot will function
 channels = ["sfnw", "general"]
-guild_ids = [397933980449767425, 601597289894641664]
+
+TOKEN = ''
