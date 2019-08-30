@@ -30,11 +30,18 @@ class MyClient(discord.Client):
             # prevents the bot from replying to itself
             if message.author.id == self.user.id:
                 return
+            if message.author.id in hanggoose.hang_participants:
+                if message.content.startswith('!leave'):
+                    hanggoose.hang_participants.remove(message.author.id)
+                    await message.channel.send("{0.author.mention} has left the game!".format(message))
+                else:
+                    await hanggoose.guess(message, client)
+                    return
             if message.content.startswith('!speak'):
                 await message.channel.send("SQUAWK! Hi there, {0.author.mention}.  I'm Greg, The Gregarious Gaming Goose!".format(message))
             elif message.content.startswith('!help'):
                 await message.channel.send("Calling in the goose tech team...", file = discord.File(path.join(path.dirname(path.realpath(__file__)), 'images/goose_tech.jpg')))
-                await message.channel.send(embed = discord.Embed(description = '!speak Says hi!\n!members Counts your goslings\n!game Opens game selection menu\n!chastise I dare you...\n!close (Admin only) Gives me some rest', color = 0xfc7f03))
+                await message.channel.send(embed = discord.Embed(description = '!speak Says hi!\n!members Counts your goslings\n!game Opens game selection menu\n!leave Leaves current game\n!chastise I dare you...\n!close (Admin only) Gives me some rest', color = 0xfc7f03))
             elif message.content.startswith('!members'):
                 await message.channel.send(f'There are {message.guild.member_count - 1} friends of the goose in this server')
             elif message.content.startswith('!game'):
