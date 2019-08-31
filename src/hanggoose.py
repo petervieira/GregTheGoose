@@ -13,6 +13,7 @@ hang_participants = []
 word = ''
 word_progress = []
 count = 0
+guesses = []
 
 async def hang_run(reaction, user, client):
     global running
@@ -50,9 +51,10 @@ async def hang_run(reaction, user, client):
         for i in range(0, len(word.rstrip())):
             word_progress.append('\_ ')
         
-        await reaction.message.channel.send('', file = discord.File(path.join(path.dirname(path.realpath(__file__)), 'images/hang_goose0.jpg')))
+        hang_start_embed = discord.Embed(description = '', color = 0xfc0703)
+        hang_start_embed.set_image(url = 'https://i.imgur.com/zfa9li6.jpg')
+        await reaction.message.channel.send(embed = hang_start_embed)
         await reaction.message.channel.send(''.join(word_progress))
-        
     else:
         running = False
         
@@ -63,27 +65,46 @@ async def guess(message, client):
     global word
     global hang_participants
     global running
+    global guesses
     compare_word = word_progress.copy()
     if len(message.content) != 1:
         await message.channel.send('Invalid letter')
+    elif message.content in guesses:
+        await message.channel.send('You already guessed that!')
     else:
+        guesses.append(message.content)
         for x in range(0,len(word)):
             if str(word[x]) == message.content:
                 compare_word[x] = message.content
         if compare_word == word_progress:
             # wrong guess
             count += 1
+            hang_stage_embed = discord.Embed(description = 'Letters guessed: ' + ', '.join(str(e) for e in guesses), color = 0xfc0703)
             if count < 6:
-                await message.channel.send('', file = discord.File(path.join(path.dirname(path.realpath(__file__)), 'images/hang_goose' + str(count) + '.jpg')))
+                if count == 1:
+                    hang_stage_embed.set_image(url = 'https://i.imgur.com/ppEvygg.jpg')
+                elif count == 2:
+                    hang_stage_embed.set_image(url = 'https://i.imgur.com/2bBns9G.jpg')
+                elif count == 3:
+                    hang_stage_embed.set_image(url = 'https://i.imgur.com/IaxyBSm.jpg')
+                elif count == 4:
+                    hang_stage_embed.set_image(url = 'https://i.imgur.com/d1B5fBQ.jpg')
+                elif count == 5:
+                    hang_stage_embed.set_image(url = 'https://i.imgur.com/SGvRuhz.jpg')
+                await message.channel.send(embed = hang_stage_embed)
+                await message.channel.send(''.join(word_progress))
             else:
-                await message.channel.send('', file = discord.File(path.join(path.dirname(path.realpath(__file__)), 'images/hang_goose6.jpg')))
+                hang_stage_embed.set_image(url = 'https://i.imgur.com/jhWzNH6.jpg')
+                await message.channel.send(embed = hang_stage_embed)
                 await message.channel.send('GAME OVER')
                 running = False
                 hang_participants = []
                 count = 0
                 word = ''
                 word_progress = []
+                guesses = []
                 # END GAME
+           
         else:
             # correct guess
             word_progress = compare_word.copy()
@@ -95,6 +116,7 @@ async def guess(message, client):
                 count = 0
                 word = ''
                 word_progress = []
+                guesses = []
                 # END GAME
     
     await asyncio.sleep(0)
