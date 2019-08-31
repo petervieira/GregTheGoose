@@ -33,6 +33,7 @@ async def hang_run(reaction, user, client):
         await asyncio.sleep(1)
         string = string[0:len(string)-3]
         await waiting_message.edit(content = string)
+    await asyncio.sleep(1)
     accepting = False
     
     if len(hang_participants) != 0:

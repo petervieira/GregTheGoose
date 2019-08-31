@@ -35,8 +35,9 @@ class MyClient(discord.Client):
                     hanggoose.hang_participants.remove(message.author.id)
                     await message.channel.send("{0.author.mention} has left the game!".format(message))
                 else:
-                    await hanggoose.guess(message, client)
-                    return
+                    if not hanggoose.accepting:
+                        await hanggoose.guess(message, client)
+                        return
             if message.content.startswith('!speak'):
                 await message.channel.send("SQUAWK! Hi there, {0.author.mention}.  I'm Greg, The Gregarious Gaming Goose!".format(message))
             elif message.content.startswith('!help'):
