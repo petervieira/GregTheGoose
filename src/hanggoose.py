@@ -9,13 +9,14 @@ from os import path
 running = False
 accepting = False
 current_hang_message_id = -1
+current_replay_message_id = -1
 hang_participants = []
 word = ''
 word_progress = []
 count = 0
 guesses = []
 
-async def hang_run(reaction, user, client):
+async def hang_run(reaction, user, client, speed):
     global running
     running = True
     global accepting
@@ -29,10 +30,16 @@ async def hang_run(reaction, user, client):
     
     string = '============================================='
     waiting_message = await reaction.message.channel.send(string)
-    for i in range(0,15):
-        await asyncio.sleep(1)
-        string = string[0:len(string)-3]
-        await waiting_message.edit(content = string)
+    if speed:
+        for i in range(0,5):
+            await asyncio.sleep(1)
+            string = string[0:len(string)-9]
+            await waiting_message.edit(content = string)
+    else:
+        for i in range(0,15):
+            await asyncio.sleep(1)
+            string = string[0:len(string)-3]
+            await waiting_message.edit(content = string)
     await asyncio.sleep(1)
     accepting = False
     
@@ -67,6 +74,7 @@ async def guess(message, client):
     global hang_participants
     global running
     global guesses
+    global current_replay_message_id
     compare_word = word_progress.copy()
     if len(message.content) != 1:
         await message.channel.send('Invalid letter')
@@ -98,6 +106,7 @@ async def guess(message, client):
                 hang_stage_embed.set_image(url = 'https://i.imgur.com/jhWzNH6.jpg')
                 await message.channel.send(embed = hang_stage_embed)
                 await message.channel.send('GAME OVER')
+                replay_embed = discord.Embed(description = 'The word was ' + word + 'Replay?', color = 0xfc0703)
                 running = False
                 hang_participants = []
                 count = 0
@@ -105,13 +114,17 @@ async def guess(message, client):
                 word_progress = []
                 guesses = []
                 # END GAME
+                
+                replay_message = await message.channel.send(embed = replay_embed)
+                current_replay_message_id = replay_message.id
+                await replay_message.add_reaction('🤔')
            
         else:
             # correct guess
             word_progress = compare_word.copy()
             await message.channel.send(''.join(word_progress))
             if ''.join(word_progress).strip() == word.rstrip():
-                await message.channel.send('You\'ve confounded the gaggle!')
+                replay_embed = discord.Embed(description = 'You\'ve confounded the gaggle!', color = 0xfc0703)
                 running = False
                 hang_participants = []
                 count = 0
@@ -119,5 +132,9 @@ async def guess(message, client):
                 word_progress = []
                 guesses = []
                 # END GAME
+                
+                replay_message = await message.channel.send(embed = replay_embed)
+                current_replay_message_id = replay_message.id
+                await replay_message.add_reaction('🤔')
     
     await asyncio.sleep(0)

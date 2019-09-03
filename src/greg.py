@@ -34,6 +34,13 @@ class MyClient(discord.Client):
                 if message.content.startswith('!leave'):
                     hanggoose.hang_participants.remove(message.author.id)
                     await message.channel.send("{0.author.mention} has left the game!".format(message))
+                    if len(hanggoose.hang_participants) == 0:
+                        hanggoose.running = False
+                        hanggoose.hang_participants = []
+                        hanggoose.count = 0
+                        hanggoose.word = ''
+                        hanggoose.word_progress = []
+                        hanggoose.guesses = []
                 else:
                     if not hanggoose.accepting:
                         await hanggoose.guess(message, client)
@@ -84,12 +91,16 @@ class MyClient(discord.Client):
     async def on_reaction_add(self, reaction, user):
         if user.id != self.user.id:
             if reaction.message.id == current_game_message_id:
-                if reaction.emoji =='🇭' and not hanggoose.running:
-                    await hanggoose.hang_run(reaction, user, client)
+                if reaction.emoji =='🇭':
+                    if hanggoose.running:
+                        await reaction.channel.send('There is a game in progress!')
+                    else:
+                        await hanggoose.hang_run(reaction, user, client, False)
                 elif reaction.emoji =='📚':
                     await asyncio.sleep(0)
                 elif reaction.emoji =='🏹':
-                    await asyncdriver.main() #this simply runs the mandelbrothers game on the host's computer
+                    #await asyncdriver.main() #this simply runs the mandelbrothers game on the host's computer
+                    await asyncio.sleep(0)
                 elif reaction.emoji =='🐍':
                     await asyncio.sleep(0)
                     
@@ -97,7 +108,11 @@ class MyClient(discord.Client):
                 if reaction.emoji =='👍' and hanggoose.accepting:
                     if user.id not in hanggoose.hang_participants:
                         hanggoose.hang_participants.append(user.id)
-    
+            
+            if reaction.message.id == hanggoose.current_replay_message_id:
+                if reaction.emoji =='🤔' and not hanggoose.running:
+                    await hanggoose.hang_run(reaction, user, client, True)
+                        
 client = MyClient() # creates client as subclass of discord.Client and overrides the events (avoids decorators)
 
 # client runs the bot token
