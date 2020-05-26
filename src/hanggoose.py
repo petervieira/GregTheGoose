@@ -2,9 +2,7 @@
 
 import discord
 import asyncio
-import os
 import random
-from os import path
 
 running = False
 accepting = False
@@ -15,34 +13,40 @@ word = ''
 word_progress = []
 count = 0
 guesses = []
+messages_to_clear = []
+pictures_to_clear = []
 
-async def hang_run(reaction, user, client, speed):
+
+async def hang_run(reaction, client, speed):
     global running
     running = True
     global accepting
     accepting = True
-    hang_embed = discord.Embed(description = '', color = 0xfc0703)
-    hang_embed.set_image(url = 'https://i.imgur.com/kEPUeck.png')
-    hang_message = await reaction.message.channel.send(embed = hang_embed)
+    hang_embed = discord.Embed(description='', color=0xfc0703)
+    hang_embed.set_image(url='https://i.imgur.com/kEPUeck.png')
+    hang_message = await reaction.message.channel.send(embed=hang_embed)
     await hang_message.add_reaction('👍')
     global current_hang_message_id
     current_hang_message_id = hang_message.id
-    
+
     string = '============================================='
-    waiting_message = await reaction.message.channel.send(string)
     if speed:
-        for i in range(0,5):
+        waiting_message = await reaction.message.channel.send(string, delete_after=7)
+        for i in range(0, 4):
             await asyncio.sleep(1)
-            string = string[0:len(string)-9]
-            await waiting_message.edit(content = string)
+            string = string[0:len(string) - 9]
+            await waiting_message.edit(content=string)
+        await hang_message.delete()
     else:
-        for i in range(0,15):
+        waiting_message = await reaction.message.channel.send(string, delete_after=17)
+        for i in range(0, 14):
             await asyncio.sleep(1)
-            string = string[0:len(string)-3]
-            await waiting_message.edit(content = string)
+            string = string[0:len(string) - 3]
+            await waiting_message.edit(content=string)
+        await hang_message.delete()
     await asyncio.sleep(1)
     accepting = False
-    
+
     if len(hang_participants) != 0:
         players = []
         for player in hang_participants:
@@ -50,22 +54,24 @@ async def hang_run(reaction, user, client, speed):
         await reaction.message.channel.send('Players: ' + ''.join(e.mention + ' ' for e in players))
 
         file = open("dictionary.txt", "r")
-        rint = random.randint(0,84036)
+        rint = random.randint(0, 84036)
         global word
         word = file.readlines()[rint]
         file.close()
-        
+
         global word_progress
         for i in range(0, len(word.rstrip())):
             word_progress.append('\_ ')
-        
-        hang_start_embed = discord.Embed(description = '', color = 0xfc0703)
-        hang_start_embed.set_image(url = 'https://i.imgur.com/zfa9li6.jpg')
-        await reaction.message.channel.send(embed = hang_start_embed)
-        await reaction.message.channel.send(''.join(word_progress))
+
+        hang_start_embed = discord.Embed(description='', color=0xfc0703)
+        hang_start_embed.set_image(url='https://i.imgur.com/zfa9li6.jpg')
+        global messages_to_clear
+        global pictures_to_clear
+        pictures_to_clear.append(await reaction.message.channel.send(embed=hang_start_embed))
+        messages_to_clear.append(await reaction.message.channel.send(''.join(word_progress)))
     else:
         running = False
-        
+
 
 async def guess(message, client):
     global count
@@ -75,38 +81,47 @@ async def guess(message, client):
     global running
     global guesses
     global current_replay_message_id
+    global messages_to_clear
+    global pictures_to_clear
     compare_word = word_progress.copy()
-    if len(message.content) != 1:
+    if len(message.content) != 1 or not message.content.isalpha():
         await message.channel.send('Invalid letter')
     elif message.content in guesses:
         await message.channel.send('You already guessed that!')
     else:
         guesses.append(message.content)
-        for x in range(0,len(word)):
+        for x in range(0, len(word)):
             if str(word[x]) == message.content:
                 compare_word[x] = message.content
         if compare_word == word_progress:
             # wrong guess
+            for mess in messages_to_clear:
+                await mess.delete()
+                messages_to_clear.remove(mess)
+            for pic in pictures_to_clear:
+                await pic.delete()
+                pictures_to_clear.remove(pic)
             count += 1
-            hang_stage_embed = discord.Embed(description = 'Letters guessed: ' + ', '.join(str(e) for e in guesses), color = 0xfc0703)
+            hang_stage_embed = discord.Embed(description='Letters guessed: ' + ', '.join(str(e) for e in guesses),
+                                             color=0xfc0703)
             if count < 6:
                 if count == 1:
-                    hang_stage_embed.set_image(url = 'https://i.imgur.com/ppEvygg.jpg')
+                    hang_stage_embed.set_image(url='https://i.imgur.com/ppEvygg.jpg')
                 elif count == 2:
-                    hang_stage_embed.set_image(url = 'https://i.imgur.com/2bBns9G.jpg')
+                    hang_stage_embed.set_image(url='https://i.imgur.com/2bBns9G.jpg')
                 elif count == 3:
-                    hang_stage_embed.set_image(url = 'https://i.imgur.com/IaxyBSm.jpg')
+                    hang_stage_embed.set_image(url='https://i.imgur.com/IaxyBSm.jpg')
                 elif count == 4:
-                    hang_stage_embed.set_image(url = 'https://i.imgur.com/d1B5fBQ.jpg')
+                    hang_stage_embed.set_image(url='https://i.imgur.com/d1B5fBQ.jpg')
                 elif count == 5:
-                    hang_stage_embed.set_image(url = 'https://i.imgur.com/SGvRuhz.jpg')
-                await message.channel.send(embed = hang_stage_embed)
-                await message.channel.send(''.join(word_progress))
+                    hang_stage_embed.set_image(url='https://i.imgur.com/SGvRuhz.jpg')
+                pictures_to_clear.append(await message.channel.send(embed=hang_stage_embed))
+                messages_to_clear.append(await message.channel.send(''.join(word_progress)))
             else:
-                hang_stage_embed.set_image(url = 'https://i.imgur.com/jhWzNH6.jpg')
-                await message.channel.send(embed = hang_stage_embed)
+                hang_stage_embed.set_image(url='https://i.imgur.com/jhWzNH6.jpg')
+                await message.channel.send(embed=hang_stage_embed)
                 await message.channel.send('GAME OVER')
-                replay_embed = discord.Embed(description = 'The word was ' + word + 'Replay?', color = 0xfc0703)
+                replay_embed = discord.Embed(description='The word was ' + word + 'Replay?', color=0xfc0703)
                 running = False
                 hang_participants = []
                 count = 0
@@ -114,17 +129,20 @@ async def guess(message, client):
                 word_progress = []
                 guesses = []
                 # END GAME
-                
-                replay_message = await message.channel.send(embed = replay_embed)
+
+                replay_message = await message.channel.send(embed=replay_embed)
                 current_replay_message_id = replay_message.id
                 await replay_message.add_reaction('🤔')
-           
+
         else:
             # correct guess
             word_progress = compare_word.copy()
-            await message.channel.send(''.join(word_progress))
+            for mess in messages_to_clear:
+                await mess.delete()
+                messages_to_clear.remove(mess)
+            messages_to_clear.append(await message.channel.send(''.join(word_progress)))
             if ''.join(word_progress).strip() == word.rstrip():
-                replay_embed = discord.Embed(description = 'You\'ve confounded the gaggle!', color = 0xfc0703)
+                replay_embed = discord.Embed(description='You\'ve confounded the gaggle!', color=0xfc0703)
                 running = False
                 hang_participants = []
                 count = 0
@@ -132,9 +150,9 @@ async def guess(message, client):
                 word_progress = []
                 guesses = []
                 # END GAME
-                
-                replay_message = await message.channel.send(embed = replay_embed)
+
+                replay_message = await message.channel.send(embed=replay_embed)
                 current_replay_message_id = replay_message.id
                 await replay_message.add_reaction('🤔')
-    
+
     await asyncio.sleep(0)
